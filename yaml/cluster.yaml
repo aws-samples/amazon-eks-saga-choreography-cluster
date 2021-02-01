@@ -1,0 +1,45 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: eks-saga-demoType
+  region: regionId
+
+cloudWatch:
+  clusterLogging:
+    enableTypes: ["*"]
+
+iam:
+  withOIDC: true
+  serviceAccounts:
+    - metadata:
+        name: eks-saga
+        namespace: eks-saga
+        labels: { aws-usage: "application" }
+      attachPolicyARNs:
+        - "arn:aws:iam::accountId:policy/eks-saga-rds-policy"
+        - "arn:aws:iam::accountId:policy/sns-policy"
+        - "arn:aws:iam::accountId:policy/sqs-policy"
+    - metadata:
+        name: cluster-autoscaler
+        namespace: kube-system
+        labels: { aws-usage: "cluster-ops" }
+      attachPolicy:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - "autoscaling:DescribeAutoScalingGroups"
+              - "autoscaling:DescribeAutoScalingInstances"
+              - "autoscaling:DescribeLaunchConfigurations"
+              - "autoscaling:DescribeTags"
+              - "autoscaling:SetDesiredCapacity"
+              - "autoscaling:TerminateInstanceInAutoScalingGroup"
+              - "ec2:DescribeLaunchTemplateVersions"
+            Resource: "*"
+
+managedNodeGroups:
+  - name: ng-db
+    labels: { role: db }
+    instanceType: m5.large
+    desiredCapacity: 3

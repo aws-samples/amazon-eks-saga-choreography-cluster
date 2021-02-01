@@ -1,18 +1,22 @@
-## My Project
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved. // SPDX-License-Identifier: CC-BY-SA-4.0
 
-TODO: Fill this README out!
+# Introduction
 
-Be sure to:
+This project has instructions for the `eks-saga` cluster on Amazon EKS.
 
-* Change the title in this README
-* Edit your repository description on GitHub
+## Usage
 
-## Security
+To install the cluster for **Choreography** demo, see [here.](doc/install.md)
 
-See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
+To remove the cluster and related objects, run the following commands.
 
-## License Summary
+```bash
+# Get the VPC id of Amazon EKS
+EKS_VPC=vpc-
+# Get the VPC id of AWS RDS
+RDS_VPC=vpc-
 
-The documentation is made available under the Creative Commons Attribution-ShareAlike 4.0 International License. See the LICENSE file.
-
-The sample code within this documentation is made available under the MIT-0 license. See the LICENSE-SAMPLECODE file.
+git clone ${GIT_URL}/eks-saga-cluster
+cd eks-saga-cluster/scripts
+./cleanup.sh ${ACCOUNT_ID} eks-saga-db ${EKS_VPC} ${RDS_VPC}
+```
