@@ -13,33 +13,38 @@ iam:
   withOIDC: true
   serviceAccounts:
     - metadata:
+        name: aws-load-balancer-controller
+        namespace: kube-system
+        labels: { aws-usage: "alb" }
+      attachPolicyARNs:
+        - "arn:aws:iam::463113836977:policy/eks-saga-elb-policy"  
+    - metadata:
         name: eks-saga
         namespace: eks-saga
         labels: { aws-usage: "application" }
       attachPolicyARNs:
         - "arn:aws:iam::accountId:policy/eks-saga-rds-policy"
-        - "arn:aws:iam::accountId:policy/sns-policy"
-        - "arn:aws:iam::accountId:policy/sqs-policy"
-    - metadata:
-        name: cluster-autoscaler
-        namespace: kube-system
-        labels: { aws-usage: "cluster-ops" }
-      attachPolicy:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Action:
-              - "autoscaling:DescribeAutoScalingGroups"
-              - "autoscaling:DescribeAutoScalingInstances"
-              - "autoscaling:DescribeLaunchConfigurations"
-              - "autoscaling:DescribeTags"
-              - "autoscaling:SetDesiredCapacity"
-              - "autoscaling:TerminateInstanceInAutoScalingGroup"
-              - "ec2:DescribeLaunchTemplateVersions"
-            Resource: "*"
+        - "arn:aws:iam::accountId:policy/eks-saga-sns-chore-policy"
+        - "arn:aws:iam::accountId:policy/eks-saga-sqs-chore-policy"
 
 managedNodeGroups:
   - name: ng-db
     labels: { role: db }
     instanceType: m5.large
     desiredCapacity: 3
+    privateNetworking: true
+    iam:
+      attachPolicyARNs:
+        - "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+        - "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+        - "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"    
+  - name: ng-web
+    labels: { role: web }
+    instanceType: m5.large
+    desiredCapacity: 3
+    privateNetworking: false    
+    iam:
+      attachPolicyARNs:
+        - "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+        - "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+        - "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"

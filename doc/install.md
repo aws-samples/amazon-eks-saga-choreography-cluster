@@ -11,13 +11,13 @@ This page documents the steps for installing the `eks-saga` cluster with **Choer
 
 ## Installation
 
-Clone the repository and change to `yaml` directory.
+1. Clone the repository and change to `yaml` directory.
 
 ```bash
-git clone ${GIT_URL}/eks-saga-cluster
+git clone ${GIT_URL}/amazon-eks-saga-choreography-cluster
 ```
 
-There are three steps of installation.
+There are two steps of installation.
 
 - Launch cluster
 - Setting up load balancer
@@ -27,27 +27,40 @@ There are three steps of installation.
 1. Run the following command to launch the cluster.
 
 ```bash
-cd eks-saga-cluster/yaml
+cd amazon-eks-saga-choreography-cluster/yaml
 sed -e 's/regionId/'"${REGION_ID}"'/g' \
   -e 's/eks-saga-demoType/eks-saga-choreography/g' \
   -e 's/accountId/'"${ACCOUNT_ID}"'/g' \
-  -e 's/sns-policy/eks-saga-sns-chore-policy/g' \
-  -e 's/sqs-policy/eks-saga-sqs-chore-policy/g' \
+  -e 's/sns-policy/eks-saga-sns-orche-policy/g' \
+  -e 's/sqs-policy/eks-saga-sqs-orche-policy/g' \
   cluster.yaml | eksctl create cluster -f -
 ```
 
-2. Set up VPC identifiers as environment variables.
+2. Set-up [Container Insights.](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/ContainerInsights.html)
 
 ```bash
-export EKS_VPC=vpc-
-export RDS_VPC=vpc-
+EKS_CLUSTER=eks-saga-choreography
+LogRegion=${REGION_ID}
+FluentBitHttpPort='2020'
+FluentBitReadFromHead='Off'
+[[ ${FluentBitReadFromHead} = 'On' ]] && FluentBitReadFromTail='Off'|| FluentBitReadFromTail='On'
+[[ -z ${FluentBitHttpPort} ]] && FluentBitHttpServer='Off' || FluentBitHttpServer='On'
+curl https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/quickstart/cwagent-fluent-bit-quickstart.yaml | sed 's/{{cluster_name}}/'${ClusterName}'/;s/{{region_name}}/'${LogRegion}'/;s/{{http_server_toggle}}/"'${FluentBitHttpServer}'"/;s/{{http_server_port}}/"'${FluentBitHttpPort}'"/;s/{{read_from_head}}/"'${FluentBitReadFromHead}'"/;s/{{read_from_tail}}/"'${FluentBitReadFromTail}'"/' | kubectl apply -f - 
 ```
 
-3. Run the following commands to enable communication between Amazon EKS and AWS RDS.
+3. Set up VPC identifiers as environment variables.
+
+```bash
+export RDS_DB_ID=eks-saga-db
+export EKS_VPC=`aws eks describe-cluster --name eks-saga-choreography --query 'cluster.resourcesVpcConfig.vpcId' --output text`
+export RDS_VPC=`aws rds describe-db-instances --db-instance-identifier ${RDS_DB_ID} --query 'DBInstances[0].DBSubnetGroup.VpcId' --output text`
+```
+
+4. Run the following commands to enable communication between Amazon EKS and AWS RDS.
 
 ```bash
 cd ../scripts
-./rds.sh ${EKS_VPC} ${RDS_VPC} eks-saga-db
+./rds.sh ${STACK_NAME} ${EKS_VPC} ${RDS_VPC} ${RDS_DB_ID}
 ```
 
 Verify that the cluster is up and running from the Amazon EKS console.

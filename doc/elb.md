@@ -7,7 +7,7 @@
 To set up load balancer, run the following commands. For complete instructions, see [here](https://docs.aws.amazon.com/eks/latest/userguide/alb-ingress.html).
 
 ```bash
-git clone ${GIT_URL}/eks-saga-cluster
+git clone ${GIT_URL}/amazon-eks-saga-choreography-cluster
 cd scripts
 ./elb.sh ${ACCOUNT_ID}
 ```
